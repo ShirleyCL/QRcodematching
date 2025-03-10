@@ -22,7 +22,7 @@
         #camera-container {
             width: 100%;
             max-width: 600px;
-            height: 60vh;
+            height: 40vh;
             position: relative;
             border: 2px solid #333;
             border-radius: 10px;
