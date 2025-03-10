@@ -135,7 +135,7 @@
         }
 
         function handleFirstCode(data) {
-            firstCode = data;
+            firstCode = String(data);
             scanning = false;
             video.classList.add('hidden');
             resultDiv.textContent = `第一个二维码内容：${data}`;
@@ -154,7 +154,7 @@
         }
 
         function handleSecondCode(data) {
-            secondCode = data;
+            secondCode = String(data);
             scanning = false;
             video.classList.add('hidden');
             
