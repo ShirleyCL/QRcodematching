@@ -167,22 +167,7 @@
             resultDiv.classList.remove('hidden');
             statusDiv.textContent = "扫描结果";
             
-            // 3秒后重置
-            setTimeout(() => {
-                firstCode = null;
-                secondCode = null;
-                resultDiv.classList.add('hidden');
-                statusDiv.textContent = "请扫描第一个二维码";
-                scanning = true;
-                video.classList.remove('hidden');
-                requestAnimationFrame(tick);
-            }, 3000);
-        }
-
-        // 启动扫描
-        initCamera().then(() => {
-            scanning = true;
-        });
+          
     </script>
 </body>
 </html>
