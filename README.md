@@ -158,7 +158,7 @@
             scanning = false;
             video.classList.add('hidden');
             
-            let result = firstCode === secondCode ? "匹配成功" : "匹配失败";
+            let result = {firstCode} === {secondCode} ? "匹配成功" : "匹配失败";
             resultDiv.innerHTML = `
                 <p>第一个二维码：${firstCode}</p>
                 <p>第二个二维码：${secondCode}</p>
