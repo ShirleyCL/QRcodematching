@@ -1,122 +1,188 @@
 # QRcodematching
-QRcode matching 
+实验4
 <!DOCTYPE html>
-<html>
+<html lang="zh-CN">
 <head>
-    <title>两步验证二维码对比</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>双二维码验证系统</title>
     <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
     <style>
-        body { font-family: Arial; text-align: center; max-width: 400px; margin: 0 auto; }
-        video { width: 90%; border: 2px solid #007bff; border-radius: 8px; }
-        button { 
-            padding: 12px 25px; 
-            margin: 10px;
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+
+        #camera-container {
+            width: 100%;
+            max-width: 600px;
+            height: 60vh;
+            position: relative;
+            border: 2px solid #333;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        #video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        #status {
+            margin: 20px 0;
+            font-size: 1.2em;
+            text-align: center;
+        }
+
+        #result {
+            padding: 15px;
+            background: #f0f0f0;
+            border-radius: 8px;
+            margin: 10px 0;
+            width: 100%;
+            max-width: 600px;
+            word-break: break-all;
+        }
+
+        #confirm-btn {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 15px 30px;
             background: #007bff;
             color: white;
             border: none;
             border-radius: 25px;
-            font-size: 16px;
+            font-size: 1.1em;
             cursor: pointer;
-            display: none; /* 默认隐藏 */
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            z-index: 100;
         }
-        .status { color: #666; margin: 15px; font-size: 18px; }
-        .result { 
-            padding: 20px;
-            margin: 20px;
-            border-radius: 10px;
-            font-size: 16px;
+
+        #confirm-btn:disabled {
+            background: #cccccc;
+            cursor: not-allowed;
         }
-        .success { background: #e8f5e9; color: #2e7d32; }
-        .error { background: #ffebee; color: #c62828; }
+
+        .hidden {
+            display: none !important;
+        }
     </style>
 </head>
 <body>
-    <h2>二维码两步验证</h2>
-    <video id="video" playsinline></video>
-    <div class="status" id="status">请扫描第一个二维码</div>
-    <button id="confirmBtn" onclick="confirmFirstCode()">确认第一个二维码</button>
-    <div id="result"></div>
+    <div id="camera-container">
+        <video id="video" playsinline></video>
+    </div>
+    <div id="status">请扫描第一个二维码</div>
+    <div id="result" class="hidden"></div>
+    <button id="confirm-btn" class="hidden" onclick="startSecondScan()">确认并扫描第二个二维码</button>
 
-<script>
-const video = document.getElementById('video');
-const statusDiv = document.getElementById('status');
-const confirmBtn = document.getElementById('confirmBtn');
-const resultDiv = document.getElementById('result');
-let qrData = { first: null, second: null };
-let scannerActive = true;
+    <script>
+        let video = document.getElementById('video');
+        let resultDiv = document.getElementById('result');
+        let statusDiv = document.getElementById('status');
+        let confirmBtn = document.getElementById('confirm-btn');
+        let firstCode = null;
+        let secondCode = null;
+        let scanning = false;
 
-// 摄像头启动
-async function initCamera() {
-    try {
-        const stream = await navigator.mediaDevices.getUserMedia({
-            video: { facingMode: "environment" }
+        // 初始化摄像头
+        async function initCamera() {
+            try {
+                let stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: "environment" } 
+                });
+                video.srcObject = stream;
+                await video.play();
+                requestAnimationFrame(tick);
+            } catch (e) {
+                alert('无法访问摄像头，请确保已授予摄像头权限');
+            }
+        }
+
+        // 二维码扫描处理
+        function tick() {
+            if (video.readyState === video.HAVE_ENOUGH_DATA) {
+                let canvas = document.createElement('canvas');
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                let ctx = canvas.getContext('2d');
+                ctx.drawImage(video, 0, 0);
+                
+                let imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                let code = jsQR(imageData.data, imageData.width, imageData.height);
+
+                if (code) {
+                    if (!firstCode) {
+                        handleFirstCode(code.data);
+                    } else if (!secondCode) {
+                        handleSecondCode(code.data);
+                    }
+                }
+            }
+            
+            if (scanning) {
+                requestAnimationFrame(tick);
+            }
+        }
+
+        function handleFirstCode(data) {
+            firstCode = data;
+            scanning = false;
+            video.classList.add('hidden');
+            resultDiv.textContent = `第一个二维码内容：${data}`;
+            resultDiv.classList.remove('hidden');
+            statusDiv.textContent = "请确认第一个二维码内容";
+            confirmBtn.classList.remove('hidden');
+        }
+
+        function startSecondScan() {
+            confirmBtn.classList.add('hidden');
+            resultDiv.classList.add('hidden');
+            video.classList.remove('hidden');
+            statusDiv.textContent = "请扫描第二个二维码";
+            scanning = true;
+            requestAnimationFrame(tick);
+        }
+
+        function handleSecondCode(data) {
+            secondCode = data;
+            scanning = false;
+            video.classList.add('hidden');
+            
+            let result = firstCode === secondCode ? "匹配成功" : "匹配失败";
+            resultDiv.innerHTML = `
+                <p>第一个二维码：${firstCode}</p>
+                <p>第二个二维码：${secondCode}</p>
+                <h2>${result}</h2>
+            `;
+            resultDiv.classList.remove('hidden');
+            statusDiv.textContent = "扫描结果";
+            
+            // 3秒后重置
+            setTimeout(() => {
+                firstCode = null;
+                secondCode = null;
+                resultDiv.classList.add('hidden');
+                statusDiv.textContent = "请扫描第一个二维码";
+                scanning = true;
+                video.classList.remove('hidden');
+                requestAnimationFrame(tick);
+            }, 3000);
+        }
+
+        // 启动扫描
+        initCamera().then(() => {
+            scanning = true;
         });
-        video.srcObject = stream;
-        video.play();
-        scanFrame();
-    } catch (error) {
-        statusDiv.innerHTML = `摄像头错误：${error.message}`;
-    }
-}
-
-// 视频帧扫描
-function scanFrame() {
-    if (!scannerActive) return;
-    
-    const canvas = document.createElement('canvas');
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    const ctx = canvas.getContext('2d');
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    const code = jsQR(imageData.data, imageData.width, imageData.height);
-
-    if (code) {
-        handleQRScan(code.data);
-    }
-    requestAnimationFrame(scanFrame);
-}
-
-// 处理扫描结果
-function handleQRScan(data) {
-    if (!qrData.first) {
-        qrData.first = data;
-        scannerActive = false; // 暂停扫描
-        statusDiv.innerHTML = "第一个二维码已扫描！";
-        confirmBtn.style.display = 'inline-block'; // 显示确认按钮
-        resultDiv.innerHTML = `<div class="result">第一个内容：<br>${data}</div>`;
-    } else if (!qrData.second) {
-        qrData.second = data;
-        scannerActive = false;
-        compareResults();
-    }
-}
-
-// 确认第一个二维码
-function confirmFirstCode() {
-    confirmBtn.style.display = 'none';
-    scannerActive = true; // 恢复扫描
-    statusDiv.innerHTML = "请扫描第二个二维码";
-    resultDiv.innerHTML += '<div class="result">等待第二个二维码...</div>';
-}
-
-// 结果对比
-function compareResults() {
-    const isMatch = qrData.first === qrData.second;
-    video.srcObject.getTracks().forEach(track => track.stop());
-    
-    resultDiv.innerHTML = `
-        <div class="result ${isMatch ? 'success' : 'error'}">
-            第一个内容：${qrData.first}<br><br>
-            第二个内容：${qrData.second}<br><br>
-            <strong>对比结果：${isMatch ? '✅ 完全一致' : '❌ 不一致'}</strong>
-        </div>`;
-    statusDiv.innerHTML = "验证完成";
-}
-
-// 初始化
-initCamera();
-</script>
+    </script>
 </body>
 </html>
