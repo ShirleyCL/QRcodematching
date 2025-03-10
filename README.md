@@ -158,7 +158,7 @@
             scanning = false;
             video.classList.add('hidden');
             
-            let result = {firstCode} === {secondCode} ? "匹配成功" : "匹配失败";
+            let result = string(firstCode) === string(secondCode) ? "匹配成功" : "匹配失败";
             resultDiv.innerHTML = `
                 <p>第一个二维码：${firstCode}</p>
                 <p>第二个二维码：${secondCode}</p>
@@ -166,9 +166,23 @@
             `;
             resultDiv.classList.remove('hidden');
             statusDiv.textContent = "扫描结果";
-        }
             
-          
+            // 3秒后重置
+            setTimeout(() => {
+                firstCode = null;
+                secondCode = null;
+                resultDiv.classList.add('hidden');
+                statusDiv.textContent = "请扫描第一个二维码";
+                scanning = true;
+                video.classList.remove('hidden');
+                requestAnimationFrame(tick);
+            }, 3000);
+        }
+
+        // 启动扫描
+        initCamera().then(() => {
+            scanning = true;
+        });
     </script>
 </body>
 </html>
