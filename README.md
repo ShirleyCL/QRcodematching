@@ -166,6 +166,7 @@
             `;
             resultDiv.classList.remove('hidden');
             statusDiv.textContent = "扫描结果";
+        }
             
           
     </script>
